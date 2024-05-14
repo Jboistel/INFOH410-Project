@@ -10,6 +10,8 @@ import copy
 
 import pandas as pd
 import numpy as np
+import math
+import matplotlib.pyplot as plt
 
 
 class Heuristic(str, Enum):
@@ -105,38 +107,87 @@ class Algorithm:
         end = time.time()
         self.logger.info(f"Time elapsed: {(end-start)*1000:.2f}ms")
 
-    def q_learn(self):
-        """ 
-        Runs with a q learning strategy
-        """
-
-        start = 0
-        goal = 1
-        
-        """ Creating R & Q matrix """
-        R = np.matrix(np.zeros(shape=(self.E,self.E)))
-        Q = np.matrix(np.zeros(shape=(self.E,self.E)))
-        Q -= 100
-        for x in range (self.E):
-            print("index ="+str(x))
-            n1 = self.edges[x][0]
-            n2 = self.edges[x][1]
-            Q[n1,n2] = 0
-            R[n1,n2] = -self.edges[x][2]
+    def q_learn(self, alpha = 0.1, gamma = 0.9, epsilon = 0.1, epsilon_min=0.01, epsilon_decay=0.995, episodes = 5000):
         
 
+        """Creating Q matrix"""
+        Q = np.matrix(np.zeros(shape=(self.V,self.V)))
+
+        """Creating R matrix"""
+        R = np.matrix(np.zeros(shape=(self.V,self.V)))
+        for x in range (self.V):
+            for y in range (self.V):
+                R[x,y] = -math.dist(self.vertices[x],self.vertices[y])
+
+        """Metrics for improvement tracking"""
+        tour_lenghts = []
+
+        for episode in range(episodes):
+            start = np.random.randint(0,self.V)
+            state = start
+            visited = set()
+            visited.add(state)
+
+            tour_lenght = 0
+
+            while len(visited) < self.V:
+                # ε-greedy policy
+                if np.random.uniform(0,1) < epsilon:
+                    # Explore: go to a random node
+                    next_state = np.random.randint(0,self.V)
+                else:
+                    # Exploit: go to the best node (the closest one)
+                    possible_next_states = Q[state,:]
+                    masked_states = np.ma.array(possible_next_states, mask=[i in visited for i in range(self.V)])
+                    next_state = masked_states.argmax()
+
+                if next_state not in visited:
+                    reward = R[state,next_state]
+                    Q[state,next_state] = Q[state,next_state] + alpha * (reward + gamma * np.max(Q[next_state,:]) - Q[state,next_state])
+                    tour_lenght -= reward
+
+                    state = next_state
+                    visited.add(state)
+
+            reward = R[state, start]
+            Q[state,start] = Q[state,start] + alpha * (reward + gamma * np.max(Q[start,:]) - Q[state,start])
+            tour_lenght -= reward
+
+            if epsilon > epsilon_min:
+                epsilon *= epsilon_decay
+
+            tour_lenghts.append(tour_lenght)
+
+            # Print the progress every few episodes
+            if (episode + 1) % 1000 == 0:
+                print(f"Episode {episode + 1}/{episodes} completed")
+            
+        """Extract the tour"""
+        tour = self.extract_tour(Q, start)
+        self.plot_evolution(tour_lenghts)
+        print("Tour: ", tour)
+
+    def extract_tour(self, Q, start):
         current_node = start
-        
-        while current_node != goal:
-            if np.random(0,1) == 1:
-                possible_nodes = np.where(Q[current_node] == 0)
-            else:
-                possible_nodes = np.where(Q[current_node,:] == np.max(Q[current_node,:]))[0]
+        tour = [start]
+        while len(tour) < self.V:
+            next_node = np.argmax(Q[current_node,])
+            while next_node in tour:
+                Q[current_node,next_node] = -np.inf # Prevent from going back to the same node
+                next_node = np.argmax(Q[current_node,])
+            tour.append(next_node)
+            current_node = next_node
+        tour.append(start)
+        return tour
+    
+    def plot_evolution(self, tour_lenghts):
+        window_size = 100
+        moving_avg = np.convolve(tour_lenghts, np.ones(window_size)/window_size, mode='valid')
 
-            next_node = np.random.choice(possible_nodes)
-
-            """ Update the q-values """
-            Q[current_node, next_node] = ()
+        plt.plot(moving_avg)
+        plt.ylabel('Tour lenght')
+        plt.xlabel('Episode')
+        plt.show()
 
 
     def solve(self):
