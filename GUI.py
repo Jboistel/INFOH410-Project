@@ -39,10 +39,10 @@ class GUI:
         self.node_labels[0] = "start"
         self.node_labels[1] = "goal"
 
-    def plotOneState(self, state, iteration, revState=[]):
+    def plotOneState(self, state, iteration):
 
+        print(state)
         # revstate is filled only when bidirectionnal search is performed
-        candidates = state[1:] + revState
 
         # Set title, texts and legends
         plt.clf()
@@ -50,17 +50,14 @@ class GUI:
         ax = plt.gca()
         ax.set_title(f"{self.name}: iteration {iteration}")
         # Compute current path cost
-        (score, _, path) = state[0]
-        path_cost = 0
-        for i, k in zip(path[0::1], path[1::1]):
-            path_cost += self.G.edges[i, k]["weight"]
-        heuristic_cost = score - path_cost
+        (score, path) = state
+        path_cost = score
         final = path[-1] == 1 and path[0] == 0
 
         plt.gcf().text(
             0.3,
             0.15,
-            f"Heuristic + path cost = {heuristic_cost:.2f} + {path_cost:.2f} = {score:.2f}",
+            f" Path cost = {path_cost:.2f}",
             fontsize=11,
         )
 
@@ -95,35 +92,9 @@ class GUI:
         edges_color = ["black" for _ in self.G.edges()]
         nodes_color = ["grey" for _ in self.G.nodes()]
 
-        # candidates nodes in blue
-        for (nscore, n, path) in candidates:
-            for i in path:
-                nodes_color[i] = COLOR_SHORT_LIST
-            for i, k in zip(path[0::1], path[1::1]):
-                try:
-                    edges_color[self.edges_index.index((i, k))] = COLOR_EXPLORED
-                except ValueError:
-                    edges_color[self.edges_index.index((k, i))] = COLOR_EXPLORED
-            nodes_color[n] = COLOR_NEIGHBOURED
 
-        # current
-        current_colors = [COLOR_CURRENT, COLOR_BIDIRECTIONAL]
-        for ix, current_state in enumerate(state[:1] + revState[:1]):
-            (score, current_node, path) = current_state
-            for i in path:
-                nodes_color[i] = COLOR_DST if final else COLOR_PATH
-            for i, k in zip(path[0::1], path[1::1]):
-                try:
-                    edges_color[self.edges_index.index((i, k))] = (
-                        COLOR_DST if final else COLOR_PATH
-                    )
-                except ValueError:
-                    edges_color[self.edges_index.index((k, i))] = (
-                        COLOR_DST if final else COLOR_PATH
-                    )
-            nodes_color[current_node] = (
-                COLOR_DST if final else current_colors[ix]
-            )
+
+
 
         # First draw start and goal nodes with star shape
         nx.draw_networkx_nodes(
@@ -169,7 +140,6 @@ class GUI:
             self.plotOneState(
                 self.history[self.index],
                 iteration=iteration,
-                revState=self.history[other_index],
             )
         else:
             self.plotOneState(self.history[self.index], iteration=self.index)
