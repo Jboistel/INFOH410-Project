@@ -97,9 +97,11 @@ class Algorithm:
         end = time.time()
         self.logger.info(f"Time elapsed: {(end-start)*1000:.2f}ms")
 
-    def q_learn(self, alpha = 0.1, gamma = 0.9, epsilon = 0.1, epsilon_min=0.01, epsilon_decay=0.995, episodes = 3000):
+    def q_learn(self, alpha = 0.1, gamma = 0.9, epsilon = 0.1, epsilon_min=0.01, epsilon_decay=0.995, episodes = 1000):
         
         eps = epsilon
+        best_tour = []
+        best = float('inf')
 
         """Creating Q matrix"""
         Q = np.matrix(np.zeros(shape=(self.V,self.V)))
@@ -148,22 +150,24 @@ class Algorithm:
                 epsilon *= epsilon_decay
 
             tour_lenghts.append(tour_lenght)
-            best
-            if tour_lenght < best:
+            tour = self.extract_tour(Q, start)
+            self.history.append((tour_lenght, tour))
+
+            if(tour_lenght < best):
                 best = tour_lenght
+                best_tour = tour
 
             # Print the progress every few episodes
             if (episode + 1) % 1000 == 0:
                 print(f"Episode {episode + 1}/{episodes} completed")
                 
-            tour = self.extract_tour(Q, start)
-            self.history.append((tour_lenght, tour))
 
             
         """Extract the tour"""
         tour = self.extract_tour(Q, start)
         self.plot_evolution(tour_lenghts, {"alpha": alpha, "gamma": gamma, "epsilon": eps, "epsilon_min": epsilon_min, "epsilon_decay": epsilon_decay})
-        print("Tour: ", tour)
+        print("Last tour extracted from Q: ", tour, " with lenght: ", tour_lenghts[-1])
+        print("Best tour extracted from Q: ", best_tour, " with lenght: ", best)
 
     def extract_tour(self, Q_original, start):
         Q = copy.deepcopy(Q_original)
