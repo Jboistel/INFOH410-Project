@@ -6,16 +6,7 @@ from pathlib import Path
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Illustration of A* algorithm")
-    parser.add_argument(
-        "--heuristic",
-        "--he",
-        type=str,
-        help="Heuristic choice",
-        required=False,
-        choices=HEURISTICS,
-        default="Mean",
-    )
+    parser = argparse.ArgumentParser(description="Illustration of Q-learning algorithm")
     parser.add_argument(
         "--instance",
         type=str,
@@ -24,29 +15,17 @@ def main():
         default=Path("datasets/20_nodes.txt"),
     )
     parser.add_argument(
-        "-b",
-        "--bidirect",
-        action="store_true",
-        help="bidirectionnal",
-        required=False,
-    )
-    parser.add_argument(
         "--log",
         dest="logLevel",
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Set the logger level",
     )
-    parser.add_argument(
-        "-q",
-        required=False,
-
-
-    )
+ 
     args = parser.parse_args()
 
     logging.basicConfig(format="[%(levelname)s] : %(message)s")
-    logger = logging.getLogger("shortest-path")
+    logger = logging.getLogger("Traveling Salesman Problem")
     logger.setLevel(args.logLevel)
 
     logger.debug(args)
@@ -57,9 +36,7 @@ def main():
 
     algorithm = Algorithm(
         instance,
-        heuristic=args.heuristic,
         logger=logger,
-        is_bidirectional=args.bidirect,
     )
     algorithm.q_learn()
     if len(algorithm.G.nodes) > 50:

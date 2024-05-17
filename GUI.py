@@ -5,14 +5,6 @@ import matplotlib.widgets as widgets
 
 matplotlib.use("TkAgg")
 
-COLOR_NEIGHBOURED = "#85fc23"
-COLOR_EXPLORED = "#65d6d2"
-COLOR_SRC = "green"
-COLOR_DST = "red"
-COLOR_PATH = "#ffb700"
-COLOR_BIDIRECTIONAL = "#a834eb"
-COLOR_CURRENT = "#FF33ff"  # "#ff9d00"
-COLOR_SHORT_LIST = "#ffff00"
 
 
 class GUI:
@@ -21,10 +13,9 @@ class GUI:
     """
 
     def __init__(
-        self, history, graph, nodes_pos, is_bidirectional, name, logger
+        self, history, graph, nodes_pos, name, logger
     ):
         self.history = history
-        self.is_bidirectional = is_bidirectional
         self.G = graph
         self.nodes_pos = nodes_pos
         self.nodes_pos_without_goals = b = {
@@ -36,93 +27,61 @@ class GUI:
 
         self.edges_index = list(self.G.edges())
         self.node_labels = {x: "{}".format(x) for x in list(self.G.nodes())}
-        self.node_labels[0] = "start"
-        self.node_labels[1] = "goal"
 
     def plotOneState(self, state, iteration):
 
-        print(state)
         # revstate is filled only when bidirectionnal search is performed
-
+        print(state)
         # Set title, texts and legends
         plt.clf()
         plt.cla()
         ax = plt.gca()
-        ax.set_title(f"{self.name}: iteration {iteration}")
+        ax.set_title(f"{self.name}: iteration {iteration+1}")
         # Compute current path cost
         (score, path) = state
         path_cost = score
         final = path[-1] == 1 and path[0] == 0
 
         plt.gcf().text(
-            0.3,
+            0.4,
             0.15,
             f" Path cost = {path_cost:.2f}",
             fontsize=11,
         )
 
-        legend_list = [
-            ("Current", COLOR_CURRENT),
-            ("Explored", COLOR_EXPLORED),
-            ("Open list", COLOR_NEIGHBOURED),
-            ("Short list", COLOR_SHORT_LIST),
-            ("Path", COLOR_PATH),
-            ("Final path", COLOR_DST),
-            ("Current of other branch", COLOR_BIDIRECTIONAL),
-        ]
-        if self.is_bidirectional:
-            x_pos = 0.05
-        else:
-            x_pos = 0.25
-        y_pos = 0.1
-        x_step = 0.13
-        for (text, col) in legend_list:
-            if not self.is_bidirectional and "other" in text:
-                continue
-            if not final and "Final" in text:
-                continue
-            if final and "Path" in text:
-                continue
-            plt.gcf().text(
-                x_pos, y_pos, text, color="k", fontsize=10, backgroundcolor=col
-            )
-            x_pos += x_step
 
         # Fill nodes and edges color wrt current state
         edges_color = ["black" for _ in self.G.edges()]
         nodes_color = ["grey" for _ in self.G.nodes()]
 
-
-
-
-
-        # First draw start and goal nodes with star shape
+        
+        # current
+        for current_state in state[0:]:
+            list_edges = []
+            for i, k in zip(path[0::1], path[1::1]):
+                list_edges.append([i, k])
+           
+        print(list_edges)
+        # Draw all nodes and edges
         nx.draw_networkx_nodes(
             self.G,
             self.nodes_pos,
-            nodelist=[0, 1],
-            node_color=nodes_color[:2],
-            node_shape="*",
+            nodelist=self.nodes_pos,
+            node_color=nodes_color,
             node_size=400,
         )
-        # Draw all nodes and edges
-        nx.draw(
+        nx.draw_networkx_labels(
             self.G,
             self.nodes_pos,
-            with_labels=True,
             labels=self.node_labels,
-            font_size=10,
-            node_color=nodes_color[2:],
-            nodelist=self.nodes_pos_without_goals,
-            edge_color=edges_color,
+            font_size=10
         )
-        # Add edges labels
-        nx.draw_networkx_edge_labels(
+        nx.draw_networkx_edges(
             self.G,
             self.nodes_pos,
-            edge_labels=nx.get_edge_attributes(self.G, "weight"),
-            font_size=6,
-        )
+            edgelist=list_edges,
+            edge_color=edges_color
+    )
 
         plt.subplots_adjust(bottom=0.2)
 
@@ -130,19 +89,7 @@ class GUI:
         self.showButtons()
 
     def plotIndex(self):
-        if self.is_bidirectional:
-            other_index = (
-                self.index + 1
-                if self.index + 1 < len(self.history)
-                else self.index - 1
-            )
-            iteration = self.index - 1 if self.index > 0 else 0
-            self.plotOneState(
-                self.history[self.index],
-                iteration=iteration,
-            )
-        else:
-            self.plotOneState(self.history[self.index], iteration=self.index)
+        self.plotOneState(self.history[self.index], iteration=self.index)
 
     def showButtons(self):
         def next(event):
@@ -162,6 +109,7 @@ class GUI:
         def reset(event):
             self.index = 0
             self.showButtons()
+            
 
         self.plotIndex()
         self.button_reset = widgets.Button(
@@ -176,6 +124,7 @@ class GUI:
         self.button_end = widgets.Button(
             plt.axes([0.8, 0.01, 0.1, 0.05]), "End"
         )
+        
 
         self.button_next.on_clicked(next)
         self.button_back.on_clicked(back)
