@@ -10,13 +10,14 @@ class GUI:
     Class used for the GUI of the project
     """
 
-    def __init__(self, history, graph, nodes_pos, name, logger):
+    def __init__(self, history, graph, nodes_pos, name, logger, best_index):
         self.history = history
         self.G = graph
         self.nodes_pos = nodes_pos
         self.nodes_pos_without_goals = {
             x: self.nodes_pos[x] for x in self.nodes_pos if x not in [0, 1]
         }
+        self.best_index = best_index
         self.name = name
         self.logger = logger
         self.index = 0
@@ -53,6 +54,10 @@ class GUI:
         self.ax_end = plt.axes([0.5, 0.01, 0.1, 0.05])
         self.button_end = widgets.Button(self.ax_end, "End")
         self.button_end.on_clicked(self.end)
+
+        self.ax_best = plt.axes([0.4, 0.01, 0.1, 0.05])
+        self.button_best = widgets.Button(self.ax_best, "Best")
+        self.button_best.on_clicked(self.best)
 
         self.plotIndex()
 
@@ -118,19 +123,28 @@ class GUI:
     def next(self, event):
         self.index += 1
         self.index = min(self.index, len(self.history) - 1)
+        self.update_slide()
         self.plotIndex()
 
     def back(self, event):
         self.index -= 1
         self.index = max(self.index, 0)
+        self.update_slide()
         self.plotIndex()
 
     def end(self, event):
         self.index = len(self.history) - 1
+        self.update_slide()
         self.plotIndex()
 
     def reset(self, event):
         self.index = 0
+        self.update_slide()
+        self.plotIndex()
+    
+    def best(self, event):
+        self.index = self.best_index
+        self.update_slide()
         self.plotIndex()
 
     def slide(self, val):
@@ -143,6 +157,10 @@ class GUI:
                 print("Slider value out of range")
         except ValueError:
             print("Invalid slider value")
+
+    def update_slide(self):
+        self.slider.set_val(self.index)
+        self.plotIndex()
 
     def show(self):
         plt.show()
