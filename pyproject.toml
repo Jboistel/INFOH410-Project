@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "shortest_path"
+name = "INFOH410-Project"
 version = "0.1.0"
 description = ""
 authors = ["Ken <ken@kenh.fr>"]
-license = "MIT"
+
 
 [tool.poetry.dependencies]
 python = ">=3.7"

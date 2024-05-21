@@ -68,6 +68,7 @@ class Algorithm:
         # Path and cost of the best solution found
         self.path = []
         self.cost = 0
+        self.best_index = 0
         self.logger = logger
         self.name = "Q-learning"
         
@@ -82,6 +83,7 @@ class Algorithm:
             self.vertices,
             self.name,
             self.logger,
+            self.best_index,
         )
         gui.show()
 
@@ -156,6 +158,7 @@ class Algorithm:
             if(tour_lenght < best):
                 best = tour_lenght
                 best_tour = tour
+                self.best_index = episode
 
             # Print the progress every few episodes
             if (episode + 1) % 1000 == 0:
@@ -166,6 +169,8 @@ class Algorithm:
         """Extract the tour"""
         tour = self.extract_tour(Q, start)
         self.plot_evolution(tour_lenghts, {"alpha": alpha, "gamma": gamma, "epsilon": eps, "epsilon_min": epsilon_min, "epsilon_decay": epsilon_decay})
+        tour = self.order_list(tour)
+        best_tour = self.order_list(best_tour)
         print("Last tour extracted from Q: ", tour, " with lenght: ", tour_lenghts[-1])
         print("Best tour extracted from Q: ", best_tour, " with lenght: ", best)
 
@@ -182,6 +187,16 @@ class Algorithm:
             current_node = next_node
         tour.append(start)
         return tour
+    
+    def order_list(self, list):
+        # Find index of the first zero in the list
+        index_zero = list.index(0)
+        
+        # Reorganize the list to begin and end with the zero
+        new_list = list[index_zero:] + list[:index_zero + 1]
+        
+        return new_list
+
     
     def plot_evolution(self, tour_lenghts, parameters):
         window_size = 100
