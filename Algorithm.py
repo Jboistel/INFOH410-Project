@@ -99,7 +99,7 @@ class Algorithm:
         end = time.time()
         self.logger.info(f"Time elapsed: {(end-start)*1000:.2f}ms")
 
-    def q_learn(self, alpha = 0.1, gamma = 0.9, epsilon = 0.1, epsilon_min=0.01, epsilon_decay=0.995, episodes = 1000):
+    def q_learn(self, alpha = 0.1, gamma = 0.9, epsilon = 0.3, epsilon_min=0.01, epsilon_decay=0.995, episodes = 3000):
         
         eps = epsilon
         best_tour = []
@@ -120,8 +120,8 @@ class Algorithm:
         for episode in range(episodes):
             start = np.random.randint(0,self.V)
             state = start
-            visited = set()
-            visited.add(state)
+            visited = []
+            visited.append(state)
 
             tour_lenght = 0
 
@@ -142,7 +142,9 @@ class Algorithm:
                     tour_lenght -= reward
 
                     state = next_state
-                    visited.add(state)
+                    visited.append(state)
+                
+
 
             reward = R[state, start]
             Q[state,start] = Q[state,start] + alpha * (reward + gamma * np.max(Q[start,:]) - Q[state,start])
@@ -151,28 +153,28 @@ class Algorithm:
             if epsilon > epsilon_min:
                 epsilon *= epsilon_decay
 
+            visited.append(start)
             tour_lenghts.append(tour_lenght)
-            tour = self.extract_tour(Q, start)
+            tour = visited
             self.history.append((tour_lenght, tour))
 
             if(tour_lenght < best):
                 best = tour_lenght
                 best_tour = tour
-                self.best_index = episode
+                self.best_index = len(self.history) - 1
 
             # Print the progress every few episodes
             if (episode + 1) % 1000 == 0:
                 print(f"Episode {episode + 1}/{episodes} completed")
-                
 
             
         """Extract the tour"""
-        tour = self.extract_tour(Q, start)
+        tour = visited
         self.plot_evolution(tour_lenghts, {"alpha": alpha, "gamma": gamma, "epsilon": eps, "epsilon_min": epsilon_min, "epsilon_decay": epsilon_decay})
-        tour = self.order_list(tour)
-        best_tour = self.order_list(best_tour)
-        print("Last tour extracted from Q: ", tour, " with lenght: ", tour_lenghts[-1])
-        print("Best tour extracted from Q: ", best_tour, " with lenght: ", best)
+        tour_ordered = self.order_list(tour)
+        best_tour_ordered = self.order_list(best_tour)
+        print("Last tour extracted from Q: ", tour_ordered, " with lenght: ", tour_lenghts[-1])
+        print("Best tour extracted from Q: ", best_tour_ordered, " with lenght: ", best)
 
     def extract_tour(self, Q_original, start):
         Q = copy.deepcopy(Q_original)
@@ -188,7 +190,10 @@ class Algorithm:
         tour.append(start)
         return tour
     
-    def order_list(self, list):
+    #A CORRIGER
+    def order_list(self, original_list):
+        list = original_list.copy()
+        list.pop()
         # Find index of the first zero in the list
         index_zero = list.index(0)
         
@@ -203,8 +208,18 @@ class Algorithm:
         moving_avg = np.convolve(tour_lenghts, np.ones(window_size)/window_size, mode='valid')
 
         plt.figure(figsize=(8,5))
-        plt.plot(tour_lenghts)
+        plt.plot(moving_avg)
         plt.title('alpha = {}, gamma = {}, epsilon = {}, epsilon_min = {}, epsilon_decay = {}'.format(parameters["alpha"], parameters["gamma"], parameters["epsilon"], parameters["epsilon_min"], parameters["epsilon_decay"]))
         plt.ylabel('Tour lenght')
         plt.xlabel('Episode')
         plt.show()
+
+
+    def compute_cost(self, tour):
+        """
+        Compute the cost of a tour
+        """
+        cost = 0
+        for i in range(len(tour) - 1):
+            cost += math.dist(self.vertices[tour[i]], self.vertices[tour[i + 1]])
+        return cost
