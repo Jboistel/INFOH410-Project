@@ -159,7 +159,7 @@ class Algorithm:
                 self.best_index = len(self.history) - 1
 
             # Print the progress every few episodes
-            if (episode + 1) % 1000 == 0:
+            if (episode + 1) % 500 == 0:
                 print(f"Episode {episode + 1}/{self.episodes} completed")
 
             
