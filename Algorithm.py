@@ -1,39 +1,34 @@
 from FileHandler import FileHandler
 from GUI import GUI
 
-import heapq
 import time
-from enum import Enum
 
 import networkx as nx
-import copy
 
-import pandas as pd
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 
 
-class Heuristic(str, Enum):
-    MANHATTAN = "Manhattan"
-    EUCLIDIAN = "Euclidian"
-    CHEBYSHEV = "Chebyshev"
-    DIJKSTRA = "Dijkstra"
-
-
-HEURISTICS = [e.value for e in Heuristic]
-
-
 class Algorithm:
-    """
-    Algorithm of A*, it generates the shortest path for the given instance and shows the result using a GUI
-    """
 
     def __init__(
         self,
         instance,
         logger,
+        alpha=0.1,
+        gamma=0.9,
+        epsilon=0.1,
+        epsilon_min=0.01,
+        epsilon_decay=0.995,
+        episodes=10000,
     ):
+        self.alpha = alpha
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.epsilon_min = epsilon_min
+        self.epsilon_decay = epsilon_decay
+        self.episodes = episodes
         fh = FileHandler(instance)
         (
             self.E,
@@ -99,9 +94,9 @@ class Algorithm:
         end = time.time()
         self.logger.info(f"Time elapsed: {(end-start)*1000:.2f}ms")
 
-    def q_learn(self, alpha = 0.1, gamma = 0.9, epsilon = 0.3, epsilon_min=0.01, epsilon_decay=0.995, episodes = 3000):
+    def q_learn(self):
         
-        eps = epsilon
+        eps = self.epsilon
         best_tour = []
         best = float('inf')
 
@@ -117,7 +112,7 @@ class Algorithm:
         """Metrics for improvement tracking"""
         tour_lenghts = []
 
-        for episode in range(episodes):
+        for episode in range(self.episodes):
             start = np.random.randint(0,self.V)
             state = start
             visited = []
@@ -127,7 +122,7 @@ class Algorithm:
 
             while len(visited) < self.V:
                 # ε-greedy policy
-                if np.random.uniform(0,1) < epsilon:
+                if np.random.uniform(0,1) < self.epsilon:
                     # Explore: go to a random node
                     next_state = np.random.randint(0,self.V)
                 else:
@@ -138,7 +133,7 @@ class Algorithm:
 
                 if next_state not in visited:
                     reward = R[state,next_state]
-                    Q[state,next_state] = Q[state,next_state] + alpha * (reward + gamma * np.max(Q[next_state,:]) - Q[state,next_state])
+                    Q[state,next_state] = Q[state,next_state] + self.alpha * (reward + self.gamma * np.max(Q[next_state,:]) - Q[state,next_state])
                     tour_lenght -= reward
 
                     state = next_state
@@ -147,11 +142,11 @@ class Algorithm:
 
 
             reward = R[state, start]
-            Q[state,start] = Q[state,start] + alpha * (reward + gamma * np.max(Q[start,:]) - Q[state,start])
+            Q[state,start] = Q[state,start] + self.alpha * (reward + self.gamma * np.max(Q[start,:]) - Q[state,start])
             tour_lenght -= reward
 
-            if epsilon > epsilon_min:
-                epsilon *= epsilon_decay
+            if self.epsilon > self.epsilon_min:
+                self.epsilon *= self.epsilon_decay
 
             visited.append(start)
             tour_lenghts.append(tour_lenght)
@@ -165,32 +160,17 @@ class Algorithm:
 
             # Print the progress every few episodes
             if (episode + 1) % 1000 == 0:
-                print(f"Episode {episode + 1}/{episodes} completed")
+                print(f"Episode {episode + 1}/{self.episodes} completed")
 
             
         """Extract the tour"""
         tour = visited
-        self.plot_evolution(tour_lenghts, {"alpha": alpha, "gamma": gamma, "epsilon": eps, "epsilon_min": epsilon_min, "epsilon_decay": epsilon_decay})
+        self.plot_evolution(tour_lenghts, {"alpha": self.alpha, "gamma": self.gamma, "epsilon": eps, "epsilon_min": self.epsilon_min, "epsilon_decay": self.epsilon_decay})
         tour_ordered = self.order_list(tour)
         best_tour_ordered = self.order_list(best_tour)
         print("Last tour extracted from Q: ", tour_ordered, " with lenght: ", tour_lenghts[-1])
         print("Best tour extracted from Q: ", best_tour_ordered, " with lenght: ", best)
-
-    def extract_tour(self, Q_original, start):
-        Q = copy.deepcopy(Q_original)
-        current_node = start
-        tour = [start]
-        while len(tour) < self.V:
-            next_node = np.argmax(Q[current_node,])
-            while next_node in tour:
-                Q[current_node,next_node] = -np.inf # Prevent from going back to the same node
-                next_node = np.argmax(Q[current_node,])
-            tour.append(next_node)
-            current_node = next_node
-        tour.append(start)
-        return tour
     
-    #A CORRIGER
     def order_list(self, original_list):
         list = original_list.copy()
         list.pop()

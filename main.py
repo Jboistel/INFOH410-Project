@@ -1,4 +1,4 @@
-from Algorithm import Algorithm, HEURISTICS
+from Algorithm import Algorithm
 import argparse
 import os
 import logging
@@ -13,6 +13,48 @@ def main():
         help="Path to instance",
         required=False,
         default=Path("datasets/20_nodes.txt"),
+    )
+    parser.add_argument(
+        "--alpha",
+        type=float,
+        help="Learning rate",
+        required=False,
+        default=0.1,
+    )
+    parser.add_argument(
+        "--gamma",
+        type=float,
+        help="Discount factor",
+        required=False,
+        default=0.9,
+    )
+    parser.add_argument(
+        "--epsilon",
+        type=float,
+        help="Exploration rate",
+        required=False,
+        default=0.1,
+    )
+    parser.add_argument(
+        "--epsilon_min",
+        type=float,
+        help="Minimum exploration rate",
+        required=False,
+        default=0.01,
+    )
+    parser.add_argument(
+        "--epsilon_decay",
+        type=float,
+        help="Exploration decay rate",
+        required=False,
+        default=0.995,
+    )
+    parser.add_argument(
+        "--episodes",
+        type=int,
+        help="Number of episodes",
+        required=False,
+        default=10000,
     )
     parser.add_argument(
         "--log",
@@ -37,6 +79,12 @@ def main():
     algorithm = Algorithm(
         instance,
         logger=logger,
+        alpha=args.alpha,
+        gamma=args.gamma,
+        epsilon=args.epsilon,
+        epsilon_min=args.epsilon_min,
+        epsilon_decay=args.epsilon_decay,
+        episodes=args.episodes,
     )
     algorithm.q_learn()
     if len(algorithm.G.nodes) > 50:
