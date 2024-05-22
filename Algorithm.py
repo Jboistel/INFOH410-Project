@@ -202,7 +202,7 @@ class Algorithm:
         moving_avg = np.convolve(tour_lenghts, np.ones(window_size)/window_size, mode='valid')
 
         plt.figure(figsize=(8,5))
-        plt.plot(tour_lenghts)
+        plt.plot(moving_avg)
         plt.title('alpha = {}, gamma = {}, epsilon = {}, epsilon_min = {}, epsilon_decay = {}'.format(parameters["alpha"], parameters["gamma"], parameters["epsilon"], parameters["epsilon_min"], parameters["epsilon_decay"]))
         plt.ylabel('Tour lenght')
         plt.xlabel('Episode')
