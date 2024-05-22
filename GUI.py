@@ -64,7 +64,7 @@ class GUI:
     def plotOneState(self, state, iteration):
         # Set title, texts and legends
         self.ax.clear()
-        self.ax.set_title(f"{self.name}: iteration {iteration + 1}")
+        self.ax.set_title(f"{self.name}: iteration {iteration}")
 
         # Compute current path cost
         (score, path) = state
