@@ -1,4 +1,4 @@
-from Algorithm import Algorithm, HEURISTICS
+from Algorithm import Algorithm
 import argparse
 import os
 import logging
