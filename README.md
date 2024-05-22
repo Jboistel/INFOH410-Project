@@ -12,7 +12,7 @@ Dans notre approche, nous utilisons une matrice Q pour représenter les valeurs 
 Pour installer l'application, commencez par copier le dépot du git,
 soit en recupérant l'archive zip depuis github, soit à l'aide de l'outil git:
 ```
-git clone [https://github.com/iridia-ulb/AI-book](https://github.com/Jboistel/INFOH410-Project.git)
+git clone (https://github.com/Jboistel/INFOH410-Project.git)
 ```
 
 Puis, accedez au dossier:
@@ -51,8 +51,3 @@ poetry run python main.py --instance datasets/13_nodes.txt --episodes 2000
 permet de lancer l'instance `13_nodes.txt` avec 2000 episodes.
 
 NB: plusieurs instances sont disponibles dans le dossier `datasets`.
-
-
-![path screen](../assets/img/shortest.png)
-
-[ia-gh]: https://github.com/iridia-ulb/AI-book
