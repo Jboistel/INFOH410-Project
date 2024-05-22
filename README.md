@@ -12,7 +12,7 @@ Dans notre approche, nous utilisons une matrice Q pour représenter les valeurs 
 Pour installer l'application, commencez par copier le dépot du git,
 soit en recupérant l'archive zip depuis github, soit à l'aide de l'outil git:
 ```
-git clone (https://github.com/Jboistel/INFOH410-Project.git)
+git clone https://github.com/Jboistel/INFOH410-Project.git
 ```
 
 Puis, accedez au dossier:
