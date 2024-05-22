@@ -14,16 +14,6 @@ import math
 import matplotlib.pyplot as plt
 
 
-class Heuristic(str, Enum):
-    MANHATTAN = "Manhattan"
-    EUCLIDIAN = "Euclidian"
-    CHEBYSHEV = "Chebyshev"
-    DIJKSTRA = "Dijkstra"
-
-
-HEURISTICS = [e.value for e in Heuristic]
-
-
 class Algorithm:
     """
     Algorithm of A*, it generates the shortest path for the given instance and shows the result using a GUI
@@ -33,7 +23,19 @@ class Algorithm:
         self,
         instance,
         logger,
+        alpha=0.1,
+        gamma=0.9,
+        epsilon=0.1,
+        epsilon_min=0.01,
+        epsilon_decay=0.995,
+        episodes=10000,
     ):
+        self.alpha = alpha
+        self.gamma = gamma
+        self.epsilon = epsilon
+        self.epsilon_min = epsilon_min
+        self.epsilon_decay = epsilon_decay
+        self.episodes = episodes
         fh = FileHandler(instance)
         (
             self.E,
@@ -99,9 +101,9 @@ class Algorithm:
         end = time.time()
         self.logger.info(f"Time elapsed: {(end-start)*1000:.2f}ms")
 
-    def q_learn(self, alpha = 0.1, gamma = 0.9, epsilon = 0.1, epsilon_min=0.01, epsilon_decay=0.995, episodes = 1000):
+    def q_learn(self):
         
-        eps = epsilon
+        eps = self.epsilon
         best_tour = []
         best = float('inf')
 
@@ -117,7 +119,7 @@ class Algorithm:
         """Metrics for improvement tracking"""
         tour_lenghts = []
 
-        for episode in range(episodes):
+        for episode in range(self.episodes):
             start = np.random.randint(0,self.V)
             state = start
             visited = set()
@@ -127,7 +129,7 @@ class Algorithm:
 
             while len(visited) < self.V:
                 # ε-greedy policy
-                if np.random.uniform(0,1) < epsilon:
+                if np.random.uniform(0,1) < self.epsilon:
                     # Explore: go to a random node
                     next_state = np.random.randint(0,self.V)
                 else:
@@ -138,18 +140,18 @@ class Algorithm:
 
                 if next_state not in visited:
                     reward = R[state,next_state]
-                    Q[state,next_state] = Q[state,next_state] + alpha * (reward + gamma * np.max(Q[next_state,:]) - Q[state,next_state])
+                    Q[state,next_state] = Q[state,next_state] + self.alpha * (reward + self.gamma * np.max(Q[next_state,:]) - Q[state,next_state])
                     tour_lenght -= reward
 
                     state = next_state
                     visited.add(state)
 
             reward = R[state, start]
-            Q[state,start] = Q[state,start] + alpha * (reward + gamma * np.max(Q[start,:]) - Q[state,start])
+            Q[state,start] = Q[state,start] + self.alpha * (reward + self.gamma * np.max(Q[start,:]) - Q[state,start])
             tour_lenght -= reward
 
-            if epsilon > epsilon_min:
-                epsilon *= epsilon_decay
+            if self.epsilon > self.epsilon_min:
+                self.epsilon *= self.epsilon_decay
 
             tour_lenghts.append(tour_lenght)
             tour = self.extract_tour(Q, start)
@@ -162,13 +164,13 @@ class Algorithm:
 
             # Print the progress every few episodes
             if (episode + 1) % 1000 == 0:
-                print(f"Episode {episode + 1}/{episodes} completed")
+                print(f"Episode {episode + 1}/{self.episodes} completed")
                 
 
             
         """Extract the tour"""
         tour = self.extract_tour(Q, start)
-        self.plot_evolution(tour_lenghts, {"alpha": alpha, "gamma": gamma, "epsilon": eps, "epsilon_min": epsilon_min, "epsilon_decay": epsilon_decay})
+        self.plot_evolution(tour_lenghts, {"alpha": self.alpha, "gamma": self.gamma, "epsilon": eps, "epsilon_min": self.epsilon_min, "epsilon_decay": self.epsilon_decay})
         tour = self.order_list(tour)
         best_tour = self.order_list(best_tour)
         print("Last tour extracted from Q: ", tour, " with lenght: ", tour_lenghts[-1])
