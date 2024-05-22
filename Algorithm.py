@@ -15,9 +15,6 @@ import matplotlib.pyplot as plt
 
 
 class Algorithm:
-    """
-    Algorithm of A*, it generates the shortest path for the given instance and shows the result using a GUI
-    """
 
     def __init__(
         self,
